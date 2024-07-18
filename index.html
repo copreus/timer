@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+        }
+        input {
+            font-size: 1rem;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #status {
+            font-size: 1.5em;
+        }
+        #totalTime, #eta {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="setup">
+            <input type="number" id="workTime" placeholder="WORKING OUT TIME (seconds)" min="1" oninput="updateTotalTime()">
+            <input type="number" id="breakTime" placeholder="Break time (seconds)" min="1" oninput="updateTotalTime()">
+            <input type="number" id="sets" placeholder="Number of sets" min="1" oninput="updateTotalTime()">
+            <button onclick="startTimer()">Start</button>
+            <div id="totalTime"></div>
+            <div id="eta"></div>
+        </div>
+        <div id="timer" style="display: none;">
+            <h2 id="status"></h2>
+            <h3 id="timeLeft"></h3>
+            <h4 id="setCount"></h4>
+        </div>
+    </div>
+
+    <script>
+        let workTime, breakTime, sets;
+        let currentSet = 1;
+        let isWorking = true;
+        let timeLeft;
+        const beepSound = new Audio('https://files.catbox.moe/p8vt0c.mp3'); // Replace with your custom MP3 URL
+
+        function updateTotalTime() {
+            workTime = parseInt(document.getElementById('workTime').value) || 0;
+            breakTime = parseInt(document.getElementById('breakTime').value) || 0;
+            sets = parseInt(document.getElementById('sets').value) || 0;
+
+            let totalSeconds = (workTime + breakTime) * sets - breakTime;
+            let totalMinutes = Math.ceil(totalSeconds / 60);
+            
+            document.getElementById('totalTime').textContent = `Total workout time: ${totalMinutes} minutes`;
+
+            let now = new Date();
+            let etaTime = new Date(now.getTime() + totalSeconds * 1000);
+            let etaString = etaTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            document.getElementById('eta').textContent = `Estimated completion time: ${etaString}`;
+        }
+
+        function startTimer() {
+            if (isNaN(workTime) || isNaN(breakTime) || isNaN(sets) || workTime <= 0 || breakTime <= 0 || sets <= 0) {
+                alert('Please enter valid positive numbers for all fields.');
+                return;
+            }
+
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('timer').style.display = 'block';
+
+            startSet();
+        }
+
+        function startSet() {
+            isWorking = true;
+            timeLeft = workTime;
+            updateDisplay();
+            countdown();
+        }
+
+        function countdown() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateDisplay();
+                setTimeout(countdown, 1000);
+            } else {
+                beepSound.play();
+                if (isWorking) {
+                    isWorking = false;
+                    timeLeft = breakTime;
+                    updateDisplay();
+                    setTimeout(countdown, 1000);
+                } else {
+                    currentSet++;
+                    if (currentSet <= sets) {
+                        startSet();
+                    } else {
+                        document.getElementById('status').textContent = 'All sets completed!';
+                        document.getElementById('timeLeft').textContent = '';
+                        document.getElementById('setCount').textContent = '';
+                    }
+                }
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('status').textContent = isWorking ? 'WORKING OUT TIME' : 'Break Time';
+            document.getElementById('timeLeft').textContent = `Time left: ${timeLeft} seconds`;
+            document.getElementById('setCount').textContent = `Set ${currentSet} of ${sets}`;
+        }
+    </script>
+</body>
+</html>
